@@ -30,11 +30,6 @@ fn adjusted_cosine(vec_feat_1: &Vec<f32>, vec_feat_2: &Vec<f32>, vec_avg: &Vec<f
         }
     }
 
-    // if feat_1_sqr == 0.0 {
-    //     println!("{:?}", vec_feat_1);
-    //     println!("{:?}", vec_avg);
-    // }
-
     usr_pref / (feat_1_sqr.sqrt() * feat_2_sqr.sqrt())
 }
 
@@ -183,6 +178,7 @@ fn item_based_prediction(db: &MovieDB, name: u32, feature: u32) -> f32 {
             }
         }
         None => {}
+
     }
 
     let normd_usr_vec = normalize(&usr_vec);
@@ -191,71 +187,8 @@ fn item_based_prediction(db: &MovieDB, name: u32, feature: u32) -> f32 {
     unnormalize(normd_pred, normd_usr_vec.1, normd_usr_vec.2)
 }
 
-fn item_based_prediction_input(db: &mut MovieDB) -> f32 {
-    let user_id: u32;
-    let movie_id: u32;
-    println!("Enter user_id y movie_id:");
-    scan!("{} {}", user_id, movie_id);
-
-    match db.0.entry(user_id) {
-        Vacant(entry) => {
-            let mut ratings: HashMap<u32, f32> = HashMap::new();
-            let mut movie: u32;
-            let mut rating: f32;
-            for i in 0..10 {
-                println!("Enter movie_id:");
-                scan!("{}", movie);
-                println!("Enter rating:");
-                scan!("{}", rating);
-                ratings.insert(movie, rating);
-                match db.1.entry(user_id) {    
-                    Vacant(usr_map) => {
-                        let mut user_rtngs: HashMap<u32, f32> = HashMap::new();
-                        user_rtngs.insert(user_id, rating);
-                        usr_map.insert(user_rtngs);
-                    }
-                    Occupied(usr_map) => {
-                        usr_map.into_mut().insert(user_id, rating);
-                    }
-                }
-            }
-            entry.insert(ratings);
-        }
-        Occupied(_) => {}
-    }
-
-    item_based_prediction(&db, user_id, movie_id)
-}
-
 fn main() {
     // let mut db = load_db("./data/ratings.csv");
     let mut db = load_db("data/ml-latest-small/ratings.csv");
-    let mut ender: u32;
-    
-    loop {
-        println!("\nPress 0 to exit:--------------------------------");
-        scan!("{}", ender);
-        if ender == 0 {
-            break;
-        }
-        println!("Prediction: {}", item_based_prediction_input(&mut db));
-    }
+    println!("Predicion es:  {}", item_based_prediction(&db,367,5445));
 }
-
-// #[derive(Debug)]
-// struct Database {
-//     headers: HashMap<String, u32>,
-//     names: HashMap<String, u32>,
-//     records: Vec<f32>,
-// }
-
-// impl Database {
-//     fn new(path: &str) {
-//         let mut rdr = csv::Reader::from_file(path).unwrap().has_headers(true);
-//         let mut i = 0;
-//         for record in rdr.decode() {
-//             i+=1;
-//         }
-//         println!("{}", i);
-//     }
-// }
