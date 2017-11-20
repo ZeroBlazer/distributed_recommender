@@ -1,6 +1,3 @@
-fn main() {
-    println!("Hello, world!");
-}
 extern crate csv;
 extern crate rustc_serialize;
 extern crate time;
