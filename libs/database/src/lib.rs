@@ -64,7 +64,7 @@ impl Database {
     }
 
     fn get_user_ratings(user_id: i32) -> Vec<f32> {
-
+        
     }
 
     fn get_item_ratings(user_id: i32) -> Vec<f32> {
