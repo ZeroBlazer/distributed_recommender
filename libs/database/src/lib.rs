@@ -1,8 +1,8 @@
 extern crate csv;
+extern crate distance;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate distance;
 
 // use std::fs::File;
 use std::collections::HashMap;
@@ -13,6 +13,15 @@ pub struct Database {
     users: HashMap<i32, HashMap<i32, usize>>,
     movies: HashMap<i32, HashMap<i32, usize>>,
     ratings: Vec<f32>,
+}
+
+pub fn count_records(path: &str) -> usize {
+    let mut tmp = csv::ReaderBuilder::new()
+        .delimiter(b',')
+        .from_path(path)
+        .unwrap();
+
+    tmp.records().count()
 }
 
 // fn nearest_neighbors(n: usize) -> Vec<(f32, String)> {
@@ -105,7 +114,11 @@ impl Database {
         rated_movies_us1.union(&rated_movies_us2).cloned().collect()
     }
 
-    pub fn user_distance_vector(&self, user_id: i32, func: fn(&[f32], &[f32]) -> f32) -> Vec<(i32, f32)> {
+    pub fn user_distance_vector(
+        &self,
+        user_id: i32,
+        func: fn(&[f32], &[f32]) -> f32,
+    ) -> Vec<(i32, f32)> {
         let mut dist_vec: Vec<(i32, f32)> = Vec::new();
 
         let users: Vec<&i32> = self.users.keys().collect();
@@ -122,13 +135,13 @@ impl Database {
         dist_vec
     }
 
-    
+
 
     pub fn user_based_recommendation(&self, user_id: i32) -> Vec<(i32, f32)> {
         let mut dist_vec = self.user_distance_vector(user_id, distance::pearson_coef);
 
         dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        
+
         dist_vec
     }
 
