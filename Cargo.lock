@@ -45,6 +45,7 @@ name = "distributed_recommender"
 version = "0.1.0"
 dependencies = [
  "database 0.1.0",
+ "distance 0.1.0",
  "timely 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
