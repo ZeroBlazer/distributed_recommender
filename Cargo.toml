@@ -6,4 +6,5 @@ authors = ["Elías Puma <elpumitaelias@gmail.com>"]
 [dependencies]
 database = { path = "libs/database" }
 distance = { path = "libs/distance" }
+getopts = "0.2"
 timely = "*"
