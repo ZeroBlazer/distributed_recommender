@@ -127,7 +127,7 @@ impl Database {
     pub fn user_based_recommendation(&self, user_id: i32) -> Vec<(i32, f32)> {
         let mut dist_vec = self.user_distance_vector(user_id, distance::pearson_coef);
 
-        dist_vec.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         
         dist_vec
     }
