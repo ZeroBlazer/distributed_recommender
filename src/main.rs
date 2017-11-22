@@ -65,16 +65,17 @@ fn main() {
             
             let user_id = get_input();
 
-            for step in 0..n_processes {
+            let users = db.get_users_ids();
+
+            for user in &users {
                 // input.send((user_id, range_origin, range_end));
-                input.send(user_id as u64);
+                input.send(user as u64);
                 input.advance_to(step + 1);
                 while probe.less_than(input.time()) {
                     worker.step();
                 }
             }
         }
-        //println!("esto es para get_input: {}", get_input());
 
     }).unwrap();
 }

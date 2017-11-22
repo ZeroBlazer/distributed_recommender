@@ -166,11 +166,11 @@ impl Database {
 
     // }
 
-    fn get_users_ids(&self) -> Vec<i32> {
+    pub fn get_users_ids(&self) -> Vec<i32> {
         self.users.keys().cloned().collect()
     }
 
-    fn get_movies_ids(&self) -> Vec<i32> {
+    pub fn get_movies_ids(&self) -> Vec<i32> {
         self.movies.keys().cloned().collect()
     }
 }
