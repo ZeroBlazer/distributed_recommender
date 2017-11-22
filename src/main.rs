@@ -3,8 +3,22 @@ extern crate distance;
 extern crate timely;
 
 use database::*;
+use std::io::{stdin, BufRead};
 use timely::dataflow::InputHandle;
 use timely::dataflow::operators::{Input, Exchange, Inspect, Probe};
+
+// FUNCTION GetInput:
+fn get_input() ->  i32 {
+    let mut buffer = String::new();
+    let stdin = stdin();
+    stdin
+        .lock()
+        .read_line(&mut buffer)
+        .expect("Could not read line");
+    buffer.pop();
+    buffer.parse::<i32>().unwrap()
+}
+//
 
 fn main() {
     timely::execute_from_args(std::env::args(), |worker| {
@@ -37,6 +51,9 @@ fn main() {
                 }
             }
         }
+        //println!("esto es para get_input: {}", get_input());
+        let input = get_input();
+        println!("... {}", input);
 
         // let path = "data/ml-latest-small/ratings.csv";
 
