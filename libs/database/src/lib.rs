@@ -25,6 +25,7 @@ pub fn count_records(path: &str) -> usize {
 }
 
 impl Database {
+    // CREACION DE DB
     pub fn new() -> Database {
         Database {
             users: HashMap::new(),
@@ -92,7 +93,9 @@ impl Database {
             ratings: ratings,
         }
     }
+    /************************************************************************************/
 
+    /***********************RECOMENDACION BASADA EN USUARIO******************************/
     fn get_ratings_from_user(&self, user_id: i32, movies: &[&i32]) -> Vec<f32> {
         let mut ratings: Vec<f32> = Vec::new();
 
@@ -110,10 +113,6 @@ impl Database {
 
         ratings
     }
-
-    // fn get_item_ratings(user_id: i32) -> Vec<f32> {
-
-    // }
 
     fn get_users_common_ratings(&self, user_id1: i32, user_id2: i32) -> Vec<&i32> {
         let rated_movies_us1: BTreeSet<&i32> = if let Some(ratings) = self.users.get(&user_id1) {
@@ -152,8 +151,6 @@ impl Database {
         dist_vec
     }
 
-
-
     pub fn user_based_recommendation(&self, user_id: i32) -> Vec<(i32, f32)> {
         let mut dist_vec = self.user_distance_vector(user_id, distance::pearson_coef);
 
@@ -161,11 +158,93 @@ impl Database {
 
         dist_vec
     }
+    /************************************************************************************/
 
-    // fn item_based_recommendation(user_id: i32) -> f32 {
+    /***********************RECOMENDACION BASADA EN ITEM******************************/
+    fn get_ratings_from_item(&self, movie_id: i32, users: &[&i32]) -> Vec<f32> {
+        let mut ratings: Vec<f32> = Vec::new();
 
-    // }
+        if let Some(movie_user_ratings) = self.movies.get(&movie_id) {
+            for user in users {
+                if let Some(rating) = movie_user_ratings.get(user) {
+                    ratings.push(self.ratings[*rating]);
+                } else {
+                    ratings.push(0.0);
+                }
+            }
+        } else {
+            panic!("User didn't rate any movie");
+        };
 
+        ratings
+    }
+    
+    fn get_items_common_ratings(&self, movie_id1: i32, movie_id2: i32) -> Vec<&i32> {
+        let rated_users_mv1: BTreeSet<&i32> = if let Some(ratings) = self.movies.get(&movie_id1) {
+            ratings.keys().collect()
+        } else {
+            BTreeSet::new()
+        };
+
+        let rated_users_mv2: BTreeSet<&i32> = if let Some(ratings) = self.movies.get(&movie_id2) {
+            ratings.keys().collect()
+        } else {
+            BTreeSet::new()
+        };
+
+        rated_users_mv1.union(&rated_users_mv2).cloned().collect()
+    }
+    
+    pub fn item_distance_vector(
+        &self,
+        movie_id: i32,
+        func: fn(&[f32], &[f32]) -> f32,
+    ) -> Vec<(i32, f32)> {
+        let mut dist_vec: Vec<(i32, f32)> = Vec::new();
+
+        let movies: Vec<&i32> = self.movies.keys().collect();
+        for movie in &movies {
+            if **movie != movie_id {
+                let common_ratings = self.get_items_common_ratings(movie_id, **movie);
+                let movie1_vec = self.get_ratings_from_item(movie_id, &common_ratings);
+                let movie2_vec = self.get_ratings_from_item(**movie, &common_ratings);
+
+                dist_vec.push((**movie, func(&movie1_vec, &movie2_vec)));
+            }
+        }
+
+        dist_vec
+    }
+    
+    fn item_based_recommendation(&self, movie_id: i32) -> Vec<(i32, f32)> {
+        let mut dist_vec = self.item_distance_vector(movie_id, distance::pearson_coef);
+        dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        dist_vec
+    }
+
+    fn highest_rated_movie(&self, user_id: i32) -> i32 {
+        if let Some(user_movie_ratings) = self.users.get(&user_id) {
+            let movies: Vec<&i32> = user_movie_ratings.keys().collect();
+            let mut highest_rated: (i32, f32) = (0, 0.0);
+
+            for movie in movies {
+                if let Some(rating) = user_movie_ratings.get(movie) {
+                    if self.ratings[*rating] >= highest_rated.1 {
+                        highest_rated = (*movie, self.ratings[*rating]);
+                    }
+                } else {
+                    panic!("User didn't rate this movie");
+                }
+            }
+
+            highest_rated.0
+        } else {
+            panic!("User didn't rate any movie");
+        }
+    }
+
+    /************************************************************************************/
     pub fn get_users_ids(&self) -> Vec<i32> {
         self.users.keys().cloned().collect()
     }
