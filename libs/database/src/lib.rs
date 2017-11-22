@@ -167,10 +167,10 @@ impl Database {
     // }
 
     fn get_users_ids(&self) -> Vec<i32> {
-        !unimplemented!();
+        self.users.keys().cloned().collect()
     }
 
     fn get_movies_ids(&self) -> Vec<i32> {
-        !unimplemented!();
+        self.movies.keys().cloned().collect()
     }
 }
