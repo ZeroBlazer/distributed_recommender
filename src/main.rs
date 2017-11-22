@@ -5,10 +5,24 @@ extern crate timely;
 use database::*;
 
 use std::collections::HashMap;
+use std::io::{stdin, BufRead};
 
 use timely::dataflow::{InputHandle, ProbeHandle};
 use timely::dataflow::operators::{Input, Exchange, Map, Operator, Inspect, Probe};
 // use timely::dataflow::channels::pact::Exchange;
+
+// FUNCTION GetInput:
+fn get_input() ->  i32 {
+    let mut buffer = String::new();
+    let stdin = stdin();
+    stdin
+        .lock()
+        .read_line(&mut buffer)
+        .expect("Could not read line");
+    buffer.pop();
+    buffer.parse::<i32>().unwrap()
+}
+//
 
 fn main() {
     timely::execute_from_args(std::env::args(), |worker| {
@@ -46,19 +60,19 @@ fn main() {
 
         // introduce data and watch!
         if process_id == 0 {
-            // let user_id = get_input();
-
-            // Get users who have rated movies
+            print!("Escribir id de usuario:");
+            let user_id = get_input();
 
             for step in 0..n_processes {
                 // input.send((user_id, range_origin, range_end));
-                input.send(step as u64 + 1);
+                input.send(user_id as u64 + 1);
                 input.advance_to(step + 1);
                 while probe.less_than(input.time()) {
                     worker.step();
                 }
             }
         }
+        //println!("esto es para get_input: {}", get_input());
 
     }).unwrap();
 }
