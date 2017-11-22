@@ -4,8 +4,8 @@ extern crate timely;
 
 use database::*;
 
-use std::collections::HashMap;
-use std::io::{stdin, BufRead};
+// use std::collections::HashMap;
+use std::io::{stdin, BufRead, Write};
 
 use timely::dataflow::{InputHandle, ProbeHandle};
 use timely::dataflow::operators::{Input, Exchange, Map, Operator, Inspect, Probe};
@@ -61,6 +61,8 @@ fn main() {
         // introduce data and watch!
         if process_id == 0 {
             print!("Escribir id de usuario: ");
+            std::io::stdout().flush().ok().expect("Could not flush stdout");
+            
             let user_id = get_input();
 
             for step in 0..n_processes {
@@ -76,41 +78,3 @@ fn main() {
 
     }).unwrap();
 }
-
-// let params = get_params(std::env::args());
-// println!("{:?}", params);
-
-
-
-// extern crate getopts;
-// #[derive(Debug)]
-// struct Environment {
-//     process_id: usize,   // ID of process
-//     processes: usize,    // Number of processes
-//     threads: usize,     // Threads per Worker
-// }
-
-// fn get_params<I: Iterator<Item=String>>(args: I) -> Environment {
-//     let mut opts = getopts::Options::new();
-//     opts.optopt("w", "threads", "number of per-process worker threads", "NUM");
-//     opts.optopt("p", "process", "identity of this process", "IDX");
-//     opts.optopt("n", "processes", "number of processes", "NUM");
-//     opts.optopt("h", "hostfile", "text file whose lines are process addresses", "FILE");
-//     opts.optflag("r", "report", "reports connection progress");
-
-
-//     opts.parse(args)
-//         .map_err(|e| format!("{:?}", e))
-//         .map(|matches| {
-//             let threads = matches.opt_str("w").map(|x| x.parse().unwrap_or(1)).unwrap_or(1);
-//             let process = matches.opt_str("p").map(|x| x.parse().unwrap_or(0)).unwrap_or(0);
-//             let processes = matches.opt_str("n").map(|x| x.parse().unwrap_or(1)).unwrap_or(1);
-//             // let report = matches.opt_present("report");
-
-//             Environment {
-//                 threads: threads,
-//                 process_id: process,
-//                 processes: processes
-//             }
-//         }).ok().unwrap()
-// }

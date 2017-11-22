@@ -24,21 +24,6 @@ pub fn count_records(path: &str) -> usize {
     tmp.records().count()
 }
 
-// fn nearest_neighbors(n: usize) -> Vec<(f32, String)> {
-//         let mut dist_vec: Vec<(f32, String)> = Vec::new();
-
-//         dist_vec.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-//         dist_vec
-
-//         for (rec_id, _) in db.0.iter() {
-//             if id != rec_id.as_str() {
-//                 let rec_str = rec_id.clone();
-//                 let (obj_vec, rec_vec) = users_rating_vectors(db, id, rec_id);
-//                 dist_vec.push((func(&obj_vec, &rec_vec), rec_str));
-//             }
-//         }
-//     }
-
 impl Database {
     pub fn new() -> Database {
         Database {
@@ -180,4 +165,12 @@ impl Database {
     // fn item_based_recommendation(user_id: i32) -> f32 {
 
     // }
+
+    fn get_users_ids(&self) -> Vec<i32> {
+        !unimplemented!();
+    }
+
+    fn get_movies_ids(&self) -> Vec<i32> {
+        !unimplemented!();
+    }
 }
