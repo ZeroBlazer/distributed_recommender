@@ -20,12 +20,12 @@ fn main() {
         println!("My process_id is: {}\npeers are: {}", process_id, n_processes);
 
         // create a new input, exchange data, and inspect its output
-        let probe = worker.dataflow(|scope|
+        let probe = worker.dataflow(|scope| {
             scope.input_from(&mut input)
                  .exchange(|x| *x)
                  .inspect(move |x| println!("worker {}:\thello {}", process_id, x))
                  .probe()
-        );
+        });
 
         // introduce data and watch!
         if process_id == 0 {
