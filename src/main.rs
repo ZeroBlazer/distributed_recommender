@@ -65,7 +65,7 @@ fn main() {
 
             for step in 0..n_processes {
                 // input.send((user_id, range_origin, range_end));
-                input.send(user_id as u64 + 1);
+                input.send(user_id as u64);
                 input.advance_to(step + 1);
                 while probe.less_than(input.time()) {
                     worker.step();
