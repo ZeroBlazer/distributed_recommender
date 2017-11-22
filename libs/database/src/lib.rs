@@ -48,7 +48,35 @@ impl Database {
         }
     }
 
-    pub fn from_file(path: &str, inicio: usize, fin: usize) -> Database {
+    pub fn from_file(path: &str) -> Database {
+        let mut rdr = csv::ReaderBuilder::new()
+            .delimiter(b',')
+            .from_path(path)
+            .unwrap();
+
+        let mut users: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
+        let mut movies: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
+        let mut ratings: Vec<f32> = Vec::new();
+
+        //for (i, record) in rdr.deserialize().enumerate() {
+        for (i, record) in rdr.deserialize().enumerate() {
+            // skip and take
+            let values: (i32, i32, f32, u64) = record.unwrap();
+            ratings.push(values.2);
+            let user_ratings = users.entry(values.0).or_insert(HashMap::new());
+            let movie_ratings = movies.entry(values.1).or_insert(HashMap::new());
+            user_ratings.insert(values.1, i);
+            movie_ratings.insert(values.0, i);
+        }
+
+        Database {
+            users: users,
+            movies: movies,
+            ratings: ratings,
+        }
+    }
+
+    pub fn from_range_in_file(path: &str, inicio: usize, fin: usize) -> Database {
         let mut rdr = csv::ReaderBuilder::new()
             .delimiter(b',')
             .from_path(path)
