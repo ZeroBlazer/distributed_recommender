@@ -60,7 +60,7 @@ fn main() {
 
         // introduce data and watch!
         if process_id == 0 {
-            print!("Escribir id de usuario:");
+            print!("Escribir id de usuario: ");
             let user_id = get_input();
 
             for step in 0..n_processes {
