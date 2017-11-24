@@ -8,8 +8,8 @@ use database::*;
 use std::io::{stdin, BufRead, Write};
 
 use timely::dataflow::{InputHandle, ProbeHandle};
-use timely::dataflow::operators::{Input, Exchange, Map, Operator, Inspect, Probe};
-// use timely::dataflow::channels::pact::Exchange;
+use timely::dataflow::operators::{Input, Map, Operator, Inspect, Probe};
+use timely::dataflow::channels::pact::Exchange;
 
 // FUNCTION GetInput:
 fn get_input() ->  i32 {
@@ -26,36 +26,27 @@ fn get_input() ->  i32 {
 
 fn main() {
     timely::execute_from_args(std::env::args(), |worker| {
+        let mut input = InputHandle::new();
+        let mut probe = ProbeHandle::new();
+
+        let exchange = Exchange::new(|x: &(i32, i32)| x.0 as u64);
+
         let process_id = worker.index();
         let n_processes = worker.peers();
-
-        let mut input = InputHandle::new();
 
         println!("My process_id is: {}\nWe are {} processes", process_id, n_processes);
 
         let path = "data/ml-latest-small/ratings.csv";
-
-        // let num_records = database::count_records(path);
-        // println!("{}", num_records);
-        
         let i = process_id;
         let num_workers = n_processes;
-
-        // let div_rec_work = (num_records as f32 / num_workers as f32).ceil() as usize;
-        // println!("N records by process: {}", div_rec_work);
-
         let db = Database::from_file(path);
-        // println!("{:?}", db);
 
         // create a new input, exchange data, and inspect its output
+
         let probe = worker.dataflow(|scope| {
-            scope.input_from(&mut input)
-                 .exchange(|x| *x)
-                 .inspect(move |x| {
-                     println!("{:?}", db.user_based_recommendation(*x as i32));
-                    //  println!("worker {}:\thello {}", process_id, x)
-                 })
-                 .probe()
+            input.to_stream(scope).iter().flat_map(|(user1, user2)| {
+                println!("{:?}", db.distance_between_users(user1, user2, distance::pearson_coef));
+            });
         });
 
         // introduce data and watch!
@@ -64,18 +55,27 @@ fn main() {
             std::io::stdout().flush().ok().expect("Could not flush stdout");
             
             let user_id = get_input();
+            if let Some(movies) = db.user_rated_movies(user_id) {
+                let users = db.get_users_ids();
 
-            let users = db.get_users_ids();
-
-            for user in &users {
-                // input.send((user_id, range_origin, range_end));
-                input.send(user as u64);
-                input.advance_to(step + 1);
-                while probe.less_than(input.time()) {
-                    worker.step();
+                for (step, user) in users.iter().enumerate() {
+                    // input.send((user_id, range_origin, range_end));
+                    input.send((user_id, *user));
+                    input.advance_to(step + 1);
+                    while probe.less_than(input.time()) {
+                        worker.step();
+                    }
                 }
+            } else {
+                panic!("User didn't rated any movie");
             }
         }
 
     }).unwrap();
 }
+
+// let num_records = database::count_records(path);
+// println!("{}", num_records);
+
+        // let div_rec_work = (num_records as f32 / num_workers as f32).ceil() as usize;
+        // println!("N records by process: {}", div_rec_work);
