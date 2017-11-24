@@ -5,13 +5,13 @@ extern crate serde;
 extern crate serde_derive;
 
 // use std::fs::File;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub struct Database {
-    users: HashMap<i32, HashMap<i32, usize>>,
-    movies: HashMap<i32, HashMap<i32, usize>>,
+    users: BTreeMap<i32, BTreeMap<i32, usize>>,
+    movies: BTreeMap<i32, BTreeMap<i32, usize>>,
     ratings: Vec<f32>,
 }
 
@@ -28,8 +28,8 @@ impl Database {
     // CREACION DE DB
     pub fn new() -> Database {
         Database {
-            users: HashMap::new(),
-            movies: HashMap::new(),
+            users: BTreeMap::new(),
+            movies: BTreeMap::new(),
             ratings: Vec::new(),
         }
     }
@@ -40,8 +40,8 @@ impl Database {
             .from_path(path)
             .unwrap();
 
-        let mut users: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
-        let mut movies: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
+        let mut users: BTreeMap<i32, BTreeMap<i32, usize>> = BTreeMap::new();
+        let mut movies: BTreeMap<i32, BTreeMap<i32, usize>> = BTreeMap::new();
         let mut ratings: Vec<f32> = Vec::new();
 
         //for (i, record) in rdr.deserialize().enumerate() {
@@ -49,8 +49,8 @@ impl Database {
             // skip and take
             let values: (i32, i32, f32, u64) = record.unwrap();
             ratings.push(values.2);
-            let user_ratings = users.entry(values.0).or_insert(HashMap::new());
-            let movie_ratings = movies.entry(values.1).or_insert(HashMap::new());
+            let user_ratings = users.entry(values.0).or_insert(BTreeMap::new());
+            let movie_ratings = movies.entry(values.1).or_insert(BTreeMap::new());
             user_ratings.insert(values.1, i);
             movie_ratings.insert(values.0, i);
         }
@@ -68,8 +68,8 @@ impl Database {
             .from_path(path)
             .unwrap();
 
-        let mut users: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
-        let mut movies: HashMap<i32, HashMap<i32, usize>> = HashMap::new();
+        let mut users: BTreeMap<i32, BTreeMap<i32, usize>> = BTreeMap::new();
+        let mut movies: BTreeMap<i32, BTreeMap<i32, usize>> = BTreeMap::new();
         let mut ratings: Vec<f32> = Vec::new();
 
         //for (i, record) in rdr.deserialize().enumerate() {
@@ -81,8 +81,8 @@ impl Database {
             // skip and take
             let values: (i32, i32, f32, u64) = record.unwrap();
             ratings.push(values.2);
-            let user_ratings = users.entry(values.0).or_insert(HashMap::new());
-            let movie_ratings = movies.entry(values.1).or_insert(HashMap::new());
+            let user_ratings = users.entry(values.0).or_insert(BTreeMap::new());
+            let movie_ratings = movies.entry(values.1).or_insert(BTreeMap::new());
             user_ratings.insert(values.1, i);
             movie_ratings.insert(values.0, i);
         }
