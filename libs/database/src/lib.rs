@@ -130,21 +130,25 @@ impl Database {
         rated_movies_us1.union(&rated_movies_us2).cloned().collect()
     }
 
+    pub fn distance_between_users(&self, user1_id: i32, user2_id: i32, func: fn(&[f32], &[f32]) -> f32) -> f32 {
+        let common_ratings = self.get_users_common_ratings(user1_id, user2_id);
+        let usr1_vec = self.get_ratings_from_user(user1_id, &common_ratings);
+        let usr2_vec = self.get_ratings_from_user(user2_id, &common_ratings);
+
+        func(&usr1_vec, &usr2_vec)
+    }
+
     pub fn user_distance_vector(
         &self,
         user_id: i32,
-        func: fn(&[f32], &[f32]) -> f32,
+        func: fn(&[f32], &[f32]) -> f32
     ) -> Vec<(i32, f32)> {
         let mut dist_vec: Vec<(i32, f32)> = Vec::new();
 
         let users: Vec<&i32> = self.users.keys().collect();
         for user in &users {
             if **user != user_id {
-                let common_ratings = self.get_users_common_ratings(user_id, **user);
-                let usr1_vec = self.get_ratings_from_user(user_id, &common_ratings);
-                let usr2_vec = self.get_ratings_from_user(**user, &common_ratings);
-
-                dist_vec.push((**user, func(&usr1_vec, &usr2_vec)));
+                dist_vec.push((**user, self.distance_between_users(user_id, **user, func)));
             }
         }
 
@@ -221,6 +225,15 @@ impl Database {
         dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
         dist_vec
+    }
+
+    pub fn user_rated_movies(&self, user_id: i32) -> Option<Vec<&i32>> {
+        if let Some(user_movie_ratings) = self.users.get(&user_id) {
+            Some(user_movie_ratings.keys().collect())
+        } else {
+            // panic!("User didn't rate any movie");
+            None
+        }
     }
 
     fn highest_rated_movie(&self, user_id: i32) -> i32 {
