@@ -5,20 +5,10 @@ extern crate timely;
 use database::*;
 
 use std::io::{stdin, BufRead};
+// use std::collections::HashMap;
 
-// use timely::dataflow::*;
-// use timely::dataflow::operators::*;
-// use timely::dataflow::operators::Exchange;
-// use timely::dataflow::channels::pact::Exchange;
-
-// use timely::dataflow::operators::{ToStream, Inspect};
-// use timely::dataflow::operators::generic::unary::Unary;
-// use timely::dataflow::channels::pact::Pipeline;
-
-use std::collections::HashMap;
-
-use timely::dataflow::{InputHandle, ProbeHandle};
-use timely::dataflow::operators::{Input, Inspect, Probe};
+// use timely::dataflow::{InputHandle, ProbeHandle};
+use timely::dataflow::operators::{ToStream, Inspect};
 
 // FUNCTION GetInput:
 fn get_input() ->  i32 {
@@ -35,42 +25,45 @@ fn get_input() ->  i32 {
 fn main() {
     // initializes and runs a timely dataflow.
     timely::execute_from_args(std::env::args(), |worker| {
+        let path = "data/ml-latest-small/ratings.csv"; // = std::env::args().nth(1).unwrap();
+        let db = Database::from_file(path);
 
-        let mut input = InputHandle::new();
-        let mut probe = ProbeHandle::new();
+        // let mut input = InputHandle::new();
+        // let mut probe = ProbeHandle::new();
 
         let process_id = worker.index();
         let n_processes = worker.peers();
 
-        let path = "data/ml-latest-small/ratings.csv"; // = std::env::args().nth(1).unwrap();
-        let db = Database::from_file(path);
-
-        let user_id = 1; // get_input();
+        // let user_id = 1; // get_input();
         // if let Some(movies) = db.user_rated_movies(user_id) {
         let users = db.get_users_ids();
-
-        // create a new input, exchange data, and inspect its output
-        worker.dataflow(|scope| {
-            scope.input_from(&mut input)
-                //  .exchange(|x| *x)
-                 .inspect(move |&(id_1, id_2): &(i32, i32)| println!("{}", db.distance_between_users(id_1, id_2, distance::pearson_coef)))
-                 .probe_with(&mut probe);
-        });
-
         let n_users = users.len();
         let partition_size = (n_users as f32 / n_processes as f32).ceil() as usize;
-        let range = (process_id * partition_size, if process_id != n_processes - 1 { (process_id + 1) * partition_size } else { n_users });
 
-        for (step, user) in users[range.0..range.1].iter().enumerate() {
-            // input.send((user_id, range_origin, range_end));
-            input.send((user_id, *user));
-            input.advance_to(step + 1);
-            while probe.less_than(input.time()) {
-                worker.step();
-            }
-        }
+        worker.dataflow::<(), _, _>(|scope| {
+            println!("PID: {} - Peers: {}", process_id, n_processes);
+            let range = (process_id * partition_size, if process_id != n_processes - 1 { (process_id + 1) * partition_size } else { n_users });
+            
+            let users_part: Vec<i32> = users[range.0..range.1].iter().cloned().collect();
+            users_part.to_stream(scope)
+                      .inspect_batch(|t, x| println!("w_{:?}: {:?}", t, x));            
+        });
     }).unwrap();
 }
+
+// scope.input_from(&mut input)
+            //     //  .exchange(|x| *x)
+            //      .inspect(move |&(id_1, id_2): &(i32, i32)| println!("{}", db.distance_between_users(id_1, id_2, distance::pearson_coef)))
+            //      .probe_with(&mut probe);
+
+        // for (step, user) in users[range.0..range.1].iter().enumerate() {
+        //     // input.send((user_id, range_origin, range_end));
+        //     input.send((user_id, *user));
+        //     input.advance_to(step + 1);
+        //     while probe.less_than(input.time()) {
+        //         worker.step();
+        //     }
+        // }
 
 
 // } else {
