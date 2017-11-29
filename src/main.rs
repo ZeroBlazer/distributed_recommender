@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex};
 use timely::dataflow::{InputHandle, ProbeHandle};
 // use timely::dataflow::operators::{Inspect, Map, Operator, Probe, ToStream};
 use timely::dataflow::channels::pact::Pipeline;
-
+use timely::dataflow::channels::message::Content;
 use timely::dataflow::operators::*;
 
 // FUNCTION GetInput:
@@ -35,6 +35,7 @@ fn main() {
     // initializes and runs a timely dataflow.
     timely::execute_from_args(std::env::args(), |worker| {
         let path = "data/ml-latest-small/ratings.csv"; // = std::env::args().nth(1).unwrap();
+        // let path = "data/ml-20m/ratings.csv";
         let db = Database::from_file(path);
 
         let mut input = InputHandle::new();
@@ -43,20 +44,18 @@ fn main() {
         let process_id = worker.index();
         let n_processes = worker.peers();
 
-        // let user_id = 1; // get_input();
-        // if let Some(movies) = db.user_rated_movies(user_id) {
         let users = db.get_users_ids();
         let n_users = users.len();
         let users = Arc::new(Mutex::new(users));
-        let db = Arc::new(Mutex::new(db));
+        let db1 = Arc::new(Mutex::new(db));
+        let db2 = db1.clone();
         let partition_size = (n_users as f32 / n_processes as f32).ceil() as usize;
 
         worker.dataflow::<u64, _, _>(|scope| {
             println!("PID: {} - Peers: {}", process_id, n_processes);
             
             input.to_stream(scope)
-                 .unary(Pipeline, "user-based", |capability|
-                    //  let mut dist_vec = Vec::new();
+                 .unary(Pipeline, "user-user_distances", |capability|
 
                      move |input, output| {
                         while let Some((time, data)) = input.next() {
@@ -66,15 +65,26 @@ fn main() {
 
                                 for id_2 in users.lock().unwrap()[range_0..range_f].iter() {
                                     if id_1 != *id_2 {
-                                        session.give((*id_2, db.lock().unwrap().distance_between_users(id_1, *id_2, distance::pearson_coef)));
+                                        session.give((*id_2, db1.lock().unwrap().distance_between_users(id_1,
+                                                                                                       *id_2,
+                                                                                                       distance::pearson_coef)));
                                     }
-                                    // println!("{}", );
                                 }
                             }
                         }
                     }
                  )
-                 .inspect(|x| println!("{:?}", x));
+                 .unary(Pipeline, "user-based_recommend", |capability|
+                    move |input, output| {
+                        while let Some((time, data)) = input.next() {
+                            let mut session = output.session(&time);
+
+                            let dist_vec: Vec<(i32, f32)> = data.take().to_vec();
+                            session.give(db2.lock().unwrap().user_based_recommendation(dist_vec));
+                        }
+                    }
+                 )
+                 .inspect(|x| println!("UBR: {:?}", x));
         });
 
         let mut qry_user_id = 0;

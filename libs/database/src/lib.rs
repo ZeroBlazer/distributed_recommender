@@ -109,7 +109,7 @@ impl Database {
             }
         } else {
             panic!("User didn't rate any movie");
-        };
+        }
 
         ratings
     }
@@ -155,12 +155,23 @@ impl Database {
         dist_vec
     }
 
-    pub fn user_based_recommendation(&self, user_id: i32) -> Vec<(i32, f32)> {
-        let mut dist_vec = self.user_distance_vector(user_id, distance::pearson_coef);
+    // pub fn user_based_recommendation(&self, user_id: i32) -> Vec<(i32, f32)> {
+    //     let mut dist_vec = self.user_distance_vector(user_id, distance::pearson_coef);
 
+    //     dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+    //     dist_vec
+    // }
+
+    pub fn user_based_recommendation(&self, mut dist_vec: Vec<(i32, f32)>) -> (i32, f32) {
         dist_vec.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
-        dist_vec
+        if let Some(user_movie_ratings) = self.users.get(&dist_vec[0].0) {
+            let (movie_id, rat_pos) = user_movie_ratings.iter().max_by(|x, y| x.1.partial_cmp(&y.1).unwrap()).unwrap();
+            (*movie_id, self.ratings[*rat_pos])
+        } else {
+            panic!("user_based_recommendation: User didn't rate any movie");
+        }
     }
     /************************************************************************************/
 
