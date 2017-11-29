@@ -34,8 +34,8 @@ fn get_input() -> i32 {
 fn main() {
     // initializes and runs a timely dataflow.
     timely::execute_from_args(std::env::args(), |worker| {
-        let path = "data/ml-latest-small/ratings.csv"; // = std::env::args().nth(1).unwrap();
-        // let path = "data/ml-20m/ratings.csv";
+        // let path = "data/ml-latest-small/ratings.csv"; // = std::env::args().nth(1).unwrap();
+        let path = "data/ml-20m/ratings.csv";
         let db = Database::from_file(path);
 
         let mut input = InputHandle::new();
@@ -62,6 +62,7 @@ fn main() {
                             let mut session = output.session(&time);
                             for datum in data.drain(..) {
                                 let (range_0, range_f, id_1): (usize, usize, i32) = datum;
+                                println!("id_{}: ({} -> {})", id_1, range_0, range_f);
 
                                 for id_2 in users.lock().unwrap()[range_0..range_f].iter() {
                                     if id_1 != *id_2 {
